@@ -1,29 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-    Alert,
-    Dimensions,
-    FlatList,
-    Image,
-    Linking,
-    PermissionsAndroid,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-
-const API_URL = 'https://api.pexels.com/v1/search?query=nature';
-
-const fetchImagesFromPexels = async () => {
-    const response = await fetch(API_URL, {
-        headers: {
-            Authorization: 'knUU0k6XlgRkwPSBxI5JMhik215sS6aamXkHmTQARu2yXWzQMAi182GN',
-        },
-    });
-
-    const data = await response.json();
-    return data.photos;
-};
+import { Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { fetchImagesFromPexels, requestReadImagePermission } from './services/image-service';
 
 const { width, height } = Dimensions.get('screen');
 
@@ -65,33 +42,6 @@ const App = () => {
     }, []);
 
     useEffect(() => {
-        const requestReadImagePermission = async () => {
-            try {
-                const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES, {
-                    title: '내부 갤러리 접근',
-                    message: '내부 이미지에 접근이 필요합니다.',
-                    buttonNeutral: '나중에',
-                    buttonNegative: '취소',
-                    buttonPositive: '확인',
-                });
-
-                console.log('granted ', granted);
-                if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-                    console.log('이미지 접근 권한이 승인되었습니다.');
-                } else if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
-                    // 사용자에게 설정으로 이동하라는 경고 메시지 표시
-                    Alert.alert('권한 필요', '이미지 접근 권한이 거부되었습니다. 설정에서 권한을 직접 허용해 주세요.', [
-                        { text: '취소', style: 'cancel' },
-                        { text: '설정으로 이동', onPress: () => Linking.openSettings() },
-                    ]);
-                } else {
-                    console.log('이미지 접근 권한이 거부되었습니다.');
-                }
-            } catch (err) {
-                console.warn(err);
-            }
-        };
-
         requestReadImagePermission();
     }, []);
 
