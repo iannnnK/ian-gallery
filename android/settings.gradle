@@ -1,10 +1,6 @@
 pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
 plugins { id("com.facebook.react.settings") }
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
-rootProject.name = 'iangallery'
+rootProject.name = 'ian-gallery'
 include ':app'
 includeBuild('../node_modules/@react-native/gradle-plugin')
-
-include ':@react-native-camera-roll_camera-roll'
-project(':@react-native-camera-roll_camera-roll').projectDir = 
-    File(rootProject.projectDir, '../node_modules/@react-native-camera-roll/camera-roll/android')

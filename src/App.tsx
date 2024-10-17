@@ -1,14 +1,17 @@
+import { useCameraRoll } from '@react-native-camera-roll/camera-roll';
 import React, { useEffect, useRef, useState } from 'react';
 import { Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { fetchImagesFromPexels, requestReadImagePermission } from './services/image-service';
+
+import { fetchImagesFromPexels, hasAndroidPermission } from './services/image-service';
 
 const { width, height } = Dimensions.get('screen');
 
 const App = () => {
     const [images, setImages] = useState(null);
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [photos, getPhotos] = useCameraRoll();
     const topRef = useRef();
     const thumbRef = useRef();
-    const [activeIndex, setActiveIndex] = useState(0);
 
     const IMAGE_SIZE = 80;
     const SPACING = 12;
@@ -42,7 +45,8 @@ const App = () => {
     }, []);
 
     useEffect(() => {
-        requestReadImagePermission();
+        hasAndroidPermission();
+        getPhotos({ first: 20, assetType: 'Photos' });
     }, []);
 
     if (!images) {
@@ -53,8 +57,8 @@ const App = () => {
         <View style={{ flex: 1, backgroundColor: '#000' }}>
             <FlatList
                 ref={topRef}
-                data={images}
-                keyExtractor={item => item.id.toString()}
+                data={photos.edges}
+                keyExtractor={item => item.node.id}
                 horizontal
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
@@ -64,15 +68,15 @@ const App = () => {
                 renderItem={({ item }) => {
                     return (
                         <View style={{ width, height }}>
-                            <Image source={{ uri: item.src.portrait }} style={[StyleSheet.absoluteFillObject]} />
+                            <Image source={{ uri: item.node.image.uri }} style={[StyleSheet.absoluteFillObject]} />
                         </View>
                     );
                 }}
             />
             <FlatList
                 ref={thumbRef}
-                data={images}
-                keyExtractor={item => item.id.toString()}
+                data={photos.edges}
+                keyExtractor={item => item.node.id}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 style={{ position: 'absolute', bottom: 80 }}
@@ -81,7 +85,7 @@ const App = () => {
                     return (
                         <TouchableOpacity onPress={() => scrollActiveIndex(index)}>
                             <Image
-                                source={{ uri: item.src.portrait }}
+                                source={{ uri: item.node.image.uri }}
                                 style={{
                                     width: IMAGE_SIZE,
                                     height: IMAGE_SIZE,

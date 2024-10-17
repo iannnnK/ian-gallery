@@ -1,5 +1,5 @@
-import { Alert, Linking, PermissionsAndroid } from 'react-native';
-import { CameraRoll } from '@react-native-camera-roll/camera-roll';
+import { Album, CameraRoll, GetAlbumsParams } from '@react-native-camera-roll/camera-roll';
+import { Alert, Linking, PermissionsAndroid, Platform } from 'react-native';
 
 const API_URL = 'https://api.pexels.com/v1/search?query=nature';
 
@@ -16,6 +16,7 @@ export const requestReadImagePermission = async () => {
         console.log('granted ', granted);
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
             console.log('이미지 접근 권한이 승인되었습니다.');
+            return true;
         } else {
             Alert.alert('권한 필요', '이미지 접근 권한이 거부되었습니다. 설정에서 권한을 직접 허용해 주세요.', [
                 { text: '취소', style: 'cancel' },
@@ -25,6 +26,51 @@ export const requestReadImagePermission = async () => {
     } catch (err) {
         console.warn(err);
     }
+    return false;
+};
+
+export async function hasAndroidPermission() {
+    const getCheckPermissionPromise = () => {
+        if (Platform.Version >= 33) {
+            return Promise.all([
+                PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES),
+                PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO),
+            ]).then(
+                ([hasReadMediaImagesPermission, hasReadMediaVideoPermission]) =>
+                    hasReadMediaImagesPermission && hasReadMediaVideoPermission
+            );
+        } else {
+            return PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE);
+        }
+    };
+
+    const hasPermission = await getCheckPermissionPromise();
+    if (hasPermission) {
+        return true;
+    }
+    const getRequestPermissionPromise = () => {
+        if (Platform.Version >= 33) {
+            return PermissionsAndroid.requestMultiple([
+                PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+                PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
+            ]).then(
+                statuses =>
+                    statuses[PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES] === PermissionsAndroid.RESULTS.GRANTED &&
+                    statuses[PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO] === PermissionsAndroid.RESULTS.GRANTED
+            );
+        } else {
+            return PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE).then(
+                status => status === PermissionsAndroid.RESULTS.GRANTED
+            );
+        }
+    };
+
+    return await getRequestPermissionPromise();
+}
+
+export const getDeviceAlbums = (): Album[] => {
+    const albums: Album[] = CameraRoll.getAlbums({ assetType: 'All', albumType: 'All' });
+    return albums;
 };
 
 export const fetchImagesFromPexels = async () => {
@@ -36,8 +82,4 @@ export const fetchImagesFromPexels = async () => {
 
     const data = await response.json();
     return data.photos;
-};
-
-export const getImageFromDevice = async () => {
-    return null;
 };
